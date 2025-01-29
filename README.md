@@ -35,6 +35,8 @@ For your convenience, a snapshot of the important files from libusb-1.0, miniLZO
 
 ## Ubuntu Build Instructions
 
+Note: I only got this to compile on Ubuntu 16 LTS
+
 1. Install the required dependencies:
 
 ```bash
