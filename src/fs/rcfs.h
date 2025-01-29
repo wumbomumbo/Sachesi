@@ -37,8 +37,7 @@ class RCFS : public QFileSystem
     Q_OBJECT
 
 public:
-    explicit RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QString path)
-        : QFileSystem(filename, file, offset, size, path, ".rcfs") {}
+    explicit RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QString path);
 
     rinode createNode(int offset);
     QString generateName(QString imageExt = "");
@@ -46,7 +45,22 @@ public:
     void extractDir(int offset, int numNodes, QString basedir, qint64 startPos);
 
     bool createContents();
+    bool createImageFromFolder(const QString& folderPath, const QString& imagePath);
+    bool decompressRCFS(const QString &inputPath, const QString &outputPath);
 
+private:
+    void writeDirectoryContents(QNXStream& stream, const QDir& dir, int baseOffset);
+    void writeDirectoryEntry(QNXStream& stream, const QFileInfo& entry, int baseOffset);
+    void writeFileEntry(QNXStream& stream, const QFileInfo& entry, int baseOffset);
+    void compressData(const QByteArray &input, QByteArray &output);
+    void decompressDir(QNXStream &inputStream, QNXStream &outputStream, int offset, int numNodes, int baseOffset);
+    QByteArray decompressFile(QNXStream &inputStream, int size);
+
+    QString _path;
+    QIODevice* _file;
+    qint64 _offset;
+    qint64 _size;
+    QString _name;
 };
 
 }

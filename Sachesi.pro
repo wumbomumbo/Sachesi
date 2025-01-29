@@ -4,7 +4,7 @@ TARGET="Sachesi"
 win32: RC_ICONS += assets/sachesi.ico
 else:mac: ICON = assets/sachesi.icns
 else: ICON = assets/sachesi.png
-VERSION = 2.0.4
+VERSION = 2.1.0
 
 # Global specific
 CONFIG += c++11
@@ -61,7 +61,7 @@ else:android {
         LIBS += -llzo2
         DEFINES += _LZO2_SHARED
     }
-    LIBS += -lz -ldl -ludev
+    LIBS += -lz -ldl -ludev -llzo2
     # These below should be static for it to be fully portable (changing ABIs)
     LIBS += -lcrypto -lusb-1.0
     DEFINES += BOOTLOADER_ACCESS

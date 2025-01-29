@@ -17,6 +17,7 @@
 
 #include "mainnet.h"
 #include "splitter.h"
+#include "../fs/rcfs.h"
 #include "ports.h"
 #include <QStringList>
 #include <QMessageBox>
@@ -172,6 +173,79 @@ void MainNet::abortSplit()
 {
     emit splitter->killSplit();
     cancelSplit();
+}
+
+
+// this func is unused, maybe useful later
+void MainNet::createRCFSImageFromFolder(const QUrl &folderUrl, const QString &outputPath) {
+    QString folderPath = folderUrl.toLocalFile();
+    QString localOutputPath = QUrl(outputPath).toLocalFile(); // Convert outputPath to local file path
+    qDebug() << "Creating RCFS image from folder:" << folderPath << "to" << localOutputPath;
+
+    if (folderPath.isEmpty()) {
+        _error = "Invalid folder path.";
+        emit errorChanged();
+        qDebug() << _error;
+        return;
+    }
+
+    QFile file(localOutputPath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        _error = "Could not open output file for writing.";
+        emit errorChanged();
+        qDebug() << _error;
+        return;
+    }
+
+    FS::RCFS rcfs("", &file, 0, 0, "");
+    if (!rcfs.createImageFromFolder(folderPath, localOutputPath)) {
+        _error = "Failed to create RCFS image.";
+        emit errorChanged();
+        qDebug() << _error;
+    } else {
+        _updateMessage = "RCFS image created successfully.";
+        emit updateMessageChanged();
+        qDebug() << _updateMessage;
+    }
+}
+
+void MainNet::decompressRCFS(const QUrl &fileUrl, const QString &outputPath) {
+    QString inputPath = fileUrl.toLocalFile();
+    QString localOutputPath = QUrl(outputPath).toLocalFile(); // Convert outputPath to local file path
+    qDebug() << "Decompressing RCFS file:" << inputPath << "to" << localOutputPath;
+
+    if (inputPath.isEmpty()) {
+        _error = "Invalid input file path.";
+        emit errorChanged();
+        qDebug() << _error;
+        return;
+    }
+
+    if (inputPath == localOutputPath) {
+        _error = "Input and output paths cannot be the same.";
+        emit errorChanged();
+        qDebug() << _error;
+        return;
+    }
+
+    QFile inputFile(inputPath);
+    if (!inputFile.exists()) {
+        _error = "Input file does not exist.";
+        emit errorChanged();
+        qDebug() << _error;
+        return;
+    }
+
+    FS::RCFS rcfs("", &inputFile, 0, 0, "");
+    if (!rcfs.decompressRCFS(inputPath, localOutputPath)) {
+        _error = "Failed to decompress RCFS file.";
+        emit errorChanged();
+        qDebug() << _error;
+    } else {
+        _updateMessage = "RCFS file decompressed successfully.";
+        emit updateMessageChanged();
+        qDebug() << _updateMessage;
+    }
 }
 
 void MainNet::grabLinks(int downloadDevice)

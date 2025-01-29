@@ -60,6 +60,8 @@ public:
     MainNet(InstallNet* installer = nullptr, QObject* parent = 0);
     ~MainNet();
     Q_INVOKABLE void updateDetailRequest(QString delta, QString carrier, QString country, int device, int variant, int mode/*, int server, int version*/);
+    Q_INVOKABLE void createRCFSImageFromFolder(const QUrl &folderUrl, const QString &outputPath);
+    Q_INVOKABLE void decompressRCFS(const QUrl &fileUrl, const QString &outputPath);
     Q_INVOKABLE void downloadLinks(int downloadDevice = 0);
     Q_INVOKABLE void splitAutoloader(QUrl, int options);
     Q_INVOKABLE void combineAutoloader(QList<QUrl> selectedFiles);

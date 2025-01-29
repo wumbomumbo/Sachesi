@@ -231,5 +231,31 @@ Item {
                 font.bold: true;
             }
         }
+        // Decompress RCFS
+        ColumnLayout {
+            RowLayout {
+                FileDialog {
+                    id: decompress_rcfs_dialog
+                    title: qsTr("Decompress RCFS") + translator.lang
+                    folder: settings.installFolder
+                    onAccepted: {
+                        p.decompressRCFS(fileUrl, settings.installFolder + "/decompressed.rcfs");
+                        settings.installFolder = folder;
+                    }
+
+                    nameFilters: [ qsTr("RCFS Files") + " (*.rcfs)" + translator.lang ]
+                }
+
+                Button {
+                    text: qsTr("Decompress RCFS") + translator.lang
+                    enabled: !p.splitting
+                    onClicked: decompress_rcfs_dialog.open()
+                }
+            }
+            Label {
+                text: qsTr("Decompress an RCFS file without extracting it") + translator.lang
+                font.bold: true;
+            }
+        }
     }
 }
