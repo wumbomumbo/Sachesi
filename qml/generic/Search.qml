@@ -173,7 +173,7 @@ Item {
             property string latestOS: "10.3.2.840"
             Component.onCompleted: {
                 var http = new XMLHttpRequest()
-                var url = "https://raw.githubusercontent.com/xsacha/Sachesi/master/carrier";
+                var url = "https://raw.githubusercontent.com/wumbomumbo/Sachesi/master/carrier";
                 http.open("GET", url, true);
                 http.send(null)
                 http.onreadystatechange = function() {
@@ -217,7 +217,7 @@ Item {
             onClicked: searchButton.clicked();
         }
         Image {
-            source: carrierinfo.image <= 0 ? "" : "http://appworld.blackberry.com/ClientAPI/image/" + carrierinfo.image + "/150X/png"
+            source: carrierinfo.image <= 0 ? "" : "http://appworld.berryinfra.xyz/ClientAPI/image/" + carrierinfo.image + "/150X/png"
             sourceSize {height: carrier.height * 2 }
         }
 

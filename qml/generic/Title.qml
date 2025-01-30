@@ -35,7 +35,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         var http = new XMLHttpRequest()
-        var url = "https://raw.githubusercontent.com/xsacha/Sachesi/master/Sachesi.pro";
+        var url = "https://raw.githubusercontent.com/wumbomumbo/Sachesi/master/Sachesi.pro";
         http.open("GET", url, true);
         http.send(null)
         http.onreadystatechange = function() {

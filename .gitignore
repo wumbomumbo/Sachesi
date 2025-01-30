@@ -25,6 +25,9 @@
 *.user
 *.qm
 
+## IDE
+/.vscode
+
 # Compiler Stuff
 /Makefile
 /Sachesi

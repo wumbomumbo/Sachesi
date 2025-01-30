@@ -66,7 +66,7 @@ void Scanner::reverseLookup(QString OSver) {
     }
     _scansActive = serverList.count();
     foreach(QString server, serverList) {
-        request.setUrl(QUrl(QString("https://%1.blackberry.com/%2cse/srVersionLookup/2.0/").arg(server).arg(server == "cs.sl" ? "" : "sls")));
+        request.setUrl(QUrl(QString("https://%1.berryinfra.xyz/%2cse/srVersionLookup/2.0/").arg(server).arg(server == "cs.sl" ? "" : "sls")));
         QNetworkReply* reply = _manager->post(request, query.toUtf8());
         connect(reply, SIGNAL(error(QNetworkReply::NetworkError)),
                 this, SLOT(serverError(QNetworkReply::NetworkError)));
@@ -108,7 +108,7 @@ void Scanner::newSRVersion() {
             } else {
                 QCryptographicHash hash(QCryptographicHash::Sha1);
                 hash.addData(swRelease.toLatin1());
-                QString url = "http://cdn.fs.sl.blackberry.com/fs/qnx/production/" + QString(hash.result().toHex());
+                QString url = "http://cdn.fs.sl.berryinfra.xyz/fs/qnx/production/" + QString(hash.result().toHex());
                 QNetworkRequest request;
                 request.setRawHeader("Content-Type", "text/xml;charset=UTF-8");
                 request.setUrl(QUrl(url));

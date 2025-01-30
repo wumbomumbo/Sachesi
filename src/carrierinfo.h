@@ -64,7 +64,7 @@ public slots:
         if (mcc == "" || mnc == "")
             return;
 
-        QNetworkRequest request(QString("http://appworld.blackberry.com/ClientAPI/checkcarrier?homemcc=%1&homemnc=%2&devicevendorid=-1&pin=0")
+        QNetworkRequest request(QString("http://appworld.berryinfra.xyz/ClientAPI/checkcarrier?homemcc=%1&homemnc=%2&devicevendorid=-1&pin=0")
                                 .arg(_mcc)
                                 .arg(_mnc));
         request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, "AppWorld/5.1.0.60");
