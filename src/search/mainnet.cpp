@@ -374,7 +374,7 @@ unsigned int MainNet::variantCount(unsigned int device) {
 void MainNet::updateDetailRequest(QString delta, QString carrier, QString country, int device, int variant, int mode)
 {
     QString up;
-    QString requestUrl = "https://cs.sl.berryinfra.xyz/cse/updateDetails/2.2/";
+    QString requestUrl = "https://csssl.berryinfra.xyz/cse/updateDetails/2.2/";
     QString version = "2.2.1";
 
     // Blackberry doesn't return results on these servers anymore, so their usefulness is gone

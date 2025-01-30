@@ -108,7 +108,7 @@ void Scanner::newSRVersion() {
             } else {
                 QCryptographicHash hash(QCryptographicHash::Sha1);
                 hash.addData(swRelease.toLatin1());
-                QString url = "http://cdn.fs.sl.berryinfra.xyz/fs/qnx/production/" + QString(hash.result().toHex());
+                QString url = "http://cdnnfsssl.berryinfra.xyz/fs/qnx/production/" + QString(hash.result().toHex());
                 QNetworkRequest request;
                 request.setRawHeader("Content-Type", "text/xml;charset=UTF-8");
                 request.setUrl(QUrl(url));
