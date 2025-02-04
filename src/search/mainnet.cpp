@@ -179,7 +179,7 @@ void MainNet::abortSplit()
 // this func is unused, maybe useful later
 void MainNet::createRCFSImageFromFolder(const QUrl &folderUrl, const QString &outputPath) {
     QString folderPath = folderUrl.toLocalFile();
-    QString localOutputPath = QUrl(outputPath).toLocalFile(); // Convert outputPath to local file path
+    QString localOutputPath = QUrl(outputPath).toLocalFile();
     qDebug() << "Creating RCFS image from folder:" << folderPath << "to" << localOutputPath;
 
     if (folderPath.isEmpty()) {
@@ -211,7 +211,7 @@ void MainNet::createRCFSImageFromFolder(const QUrl &folderUrl, const QString &ou
 
 void MainNet::decompressRCFS(const QUrl &fileUrl, const QString &outputPath) {
     QString inputPath = fileUrl.toLocalFile();
-    QString localOutputPath = QUrl(outputPath).toLocalFile(); // Convert outputPath to local file path
+    QString localOutputPath = QUrl(outputPath).toLocalFile();
     qDebug() << "Decompressing RCFS file:" << inputPath << "to" << localOutputPath;
 
     if (inputPath.isEmpty()) {

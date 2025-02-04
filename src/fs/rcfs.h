@@ -53,8 +53,10 @@ private:
     void writeDirectoryEntry(QNXStream& stream, const QFileInfo& entry, int baseOffset);
     void writeFileEntry(QNXStream& stream, const QFileInfo& entry, int baseOffset);
     void compressData(const QByteArray &input, QByteArray &output);
-    void decompressDir(QNXStream &inputStream, QNXStream &outputStream, int offset, int numNodes, int baseOffset);
-    QByteArray decompressFile(QNXStream &inputStream, int size);
+    void processDirectory(QFile &inputFile, QFile &outputFile, qint64 offset, int numNodes);
+    void writeNodeMetadata(QFile &outputFile, const rinode &node);
+    void processCompressedContent(QFile &inputFile, QFile &outputFile, const rinode &node);
+    void copyFileContent(QFile &inputFile, QFile &outputFile, qint64 size);
 
     QString _path;
     QIODevice* _file;

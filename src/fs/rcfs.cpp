@@ -27,13 +27,15 @@
 namespace FS
 {
 
-RCFS::RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QString path)
-    : QFileSystem(filename, file, offset, size, path, ""), _path(filename), _file(file), _offset(offset), _size(size), _name(path) {
-    // Ensure the file is open
-    if (_file && !_file->isOpen()) {
-        _file->open(QIODevice::ReadOnly);
+    RCFS::RCFS(QString filename, QIODevice *file, qint64 offset, qint64 size, QString path)
+        : QFileSystem(filename, file, offset, size, path, ""), _path(filename), _file(file), _offset(offset), _size(size), _name(path)
+    {
+        // Ensure the file is open
+        if (_file && !_file->isOpen())
+        {
+            _file->open(QIODevice::ReadOnly);
+        }
     }
-}
 
     rinode RCFS::createNode(int offset)
     {
@@ -336,8 +338,6 @@ RCFS::RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QStrin
         }
     }
 
-    // some of this is unused, but kept cuz it could be helpful
-
     bool RCFS::decompressRCFS(const QString &inputPath, const QString &outputPath)
     {
         qDebug() << "RCFS::decompressRCFS called with inputPath:" << inputPath << "and outputPath:" << outputPath;
@@ -355,16 +355,6 @@ RCFS::RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QStrin
             return false;
         }
 
-        QDir outputDir = QFileInfo(outputPath).absoluteDir();
-        if (!outputDir.exists())
-        {
-            if (!outputDir.mkpath(outputDir.absolutePath()))
-            {
-                qWarning() << "Could not create output directory:" << outputDir.absolutePath();
-                return false;
-            }
-        }
-
         QFile outputFile(outputPath);
         if (!outputFile.open(QIODevice::WriteOnly))
         {
@@ -372,18 +362,32 @@ RCFS::RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QStrin
             return false;
         }
 
-        QNXStream inputStream(&inputFile);
-        QNXStream outputStream(&outputFile);
-
-
         QByteArray header = inputFile.read(0x1038);
+        if (header.size() != 0x1038)
+        {
+            qWarning() << "Invalid header size:" << header.size();
+            return false;
+        }
         outputFile.write(header);
 
-        inputFile.seek(0x1038);
-        qint32 offset;
-        inputStream >> offset;
+        QNXStream inputStream(&inputFile);
+        qint32 rootOffset;
+        inputStream >> rootOffset;
+
         _file = &inputFile;
-        decompressDir(inputStream, outputStream, offset, 1, 0);
+        _offset = 0;
+
+        try
+        {
+            processDirectory(inputFile, outputFile, rootOffset, 1);
+        }
+        catch (const std::exception &e)
+        {
+            qWarning() << "Error during decompression:" << e.what();
+            inputFile.close();
+            outputFile.close();
+            return false;
+        }
 
         inputFile.close();
         outputFile.close();
@@ -391,69 +395,120 @@ RCFS::RCFS(QString filename, QIODevice* file, qint64 offset, qint64 size, QStrin
         return true;
     }
 
-    void RCFS::decompressDir(QNXStream &inputStream, QNXStream &outputStream, int offset, int numNodes, int baseOffset)
+    void RCFS::processDirectory(QFile &inputFile, QFile &outputFile, qint64 offset, int numNodes)
     {
-        QDir mainDir;
         for (int i = 0; i < numNodes; i++)
         {
+            // read node
             rinode node = createNode(offset + (i * 0x20));
-            node.path_to = mainDir.absolutePath();
-            QString absName = node.path_to + "/" + node.name;
+
+            // put node metadata on outputted file
+            qint64 currentOutputPos = outputFile.pos();
+            writeNodeMetadata(outputFile, node);
+
             if (node.mode & QCFM_IS_DIRECTORY)
             {
-                mainDir.mkpath(node.name);
                 if (node.size > 0)
-                    decompressDir(inputStream, outputStream, node.offset, node.size / 0x20, baseOffset);
+                {
+                    processDirectory(inputFile, outputFile, node.offset, node.size / 0x20);
+                }
             }
             else
             {
-                inputStream.device()->seek(node.offset + baseOffset);
+                inputFile.seek(node.offset);
+
                 if (node.mode & QCFM_IS_SYMLINK)
                 {
-                    QString linkTarget = inputStream.device()->readLine(QNX6_MAX_CHARS);
-                    QFile::link(node.path_to + "/" + linkTarget, absName);
-                    continue;
+                    QByteArray linkTarget = inputFile.readLine(QNX6_MAX_CHARS);
+                    outputFile.write(linkTarget);
                 }
-                if (node.mode & QCFM_IS_LZO_COMPRESSED)
+                else if (node.mode & QCFM_IS_LZO_COMPRESSED)
                 {
-                    QByteArray decompressedData = decompressFile(inputStream, node.size);
-                    outputStream.device()->write(decompressedData);
+                    processCompressedContent(inputFile, outputFile, node);
                 }
                 else
                 {
-                    QByteArray fileData = inputStream.device()->read(node.size);
-                    outputStream.device()->write(fileData);
+                    copyFileContent(inputFile, outputFile, node.size);
                 }
             }
         }
     }
 
-    QByteArray RCFS::decompressFile(QNXStream &inputStream, int size)
+    void RCFS::writeNodeMetadata(QFile &outputFile, const rinode &node)
     {
-        QByteArray decompressedData;
-        int next;
-        inputStream >> next;
-        int chunks = (next - 4) / 4;
-        QList<int> sizes, offsets;
-        offsets.append(next);
-        for (int s = 0; s < chunks; s++)
-        {
-            inputStream >> next;
-            offsets.append(next);
-            sizes.append(offsets[s + 1] - offsets[s]);
-        }
-        char *buffer = new char[size];
-        foreach (int chunkSize, sizes)
-        {
-            char *readData = new char[chunkSize];
-            inputStream.device()->read(readData, chunkSize);
-            size_t write_len = 0x4000;
-            lzo1x_decompress_safe(reinterpret_cast<const unsigned char *>(readData), chunkSize, reinterpret_cast<unsigned char *>(buffer), &write_len, nullptr);
-            decompressedData.append(buffer, write_len);
-            delete[] readData;
-        }
-        delete[] buffer;
-        return decompressedData;
+        QNXStream stream(&outputFile);
+        stream << node.mode;
+        stream << node.nameoffset;
+        stream << outputFile.pos() + sizeof(qint32) * 3 + sizeof(time_t);
+        stream << node.size;
+        stream << node.time;
+        outputFile.write(node.name.toUtf8());
+        outputFile.write("\0", 1);
     }
 
+    void RCFS::processCompressedContent(QFile &inputFile, QFile &outputFile, const rinode &node)
+    {
+        QNXStream inputStream(&inputFile);
+
+        qint32 firstOffset;
+        inputStream >> firstOffset;
+        int chunks = (firstOffset - 4) / 4;
+
+        QVector<qint32> chunkOffsets;
+        chunkOffsets.reserve(chunks + 1);
+        chunkOffsets.append(firstOffset);
+
+        for (int i = 0; i < chunks; i++)
+        {
+            qint32 offset;
+            inputStream >> offset;
+            chunkOffsets.append(offset);
+        }
+
+        for (int i = 0; i < chunks; i++)
+        {
+            int chunkSize = chunkOffsets[i + 1] - chunkOffsets[i];
+            QByteArray compressedData = inputFile.read(chunkSize);
+
+            QByteArray decompressedData(0x4000, '\0');
+            size_t decompressedSize = decompressedData.size();
+            int result = lzo1x_decompress_safe(
+                reinterpret_cast<const unsigned char *>(compressedData.constData()),
+                chunkSize,
+                reinterpret_cast<unsigned char *>(decompressedData.data()),
+                &decompressedSize,
+                nullptr);
+
+            if (result != LZO_E_OK)
+            {
+                throw std::runtime_error("LZO decompression failed");
+            }
+
+            outputFile.write(decompressedData.left(decompressedSize));
+        }
+    }
+
+    void RCFS::copyFileContent(QFile &inputFile, QFile &outputFile, qint64 size)
+    {
+        static const qint64 bufferSize = 1024 * 1024;
+        char buffer[bufferSize];
+
+        while (size > 0)
+        {
+            qint64 bytesToRead = qMin(bufferSize, size);
+            qint64 bytesRead = inputFile.read(buffer, bytesToRead);
+
+            if (bytesRead <= 0)
+            {
+                throw std::runtime_error("Failed to read file content");
+            }
+
+            if (outputFile.write(buffer, bytesRead) != bytesRead)
+            {
+                throw std::runtime_error("Failed to write file content");
+            }
+
+            size -= bytesRead;
+        }
+    }
 }
